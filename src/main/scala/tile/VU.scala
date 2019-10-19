@@ -32,8 +32,6 @@ class VUDecoder(implicit p: Parameters) extends VUModule()(p) {
 
 class VUCoreIO(implicit p: Parameters) extends CoreBundle()(p) {
   val inst = Bits(INPUT, 32)
-
-  val
 }
 
 //TODO: Import the rest of the fpu functions
