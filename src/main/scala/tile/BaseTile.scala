@@ -68,7 +68,7 @@ trait HasNonDiplomaticTileParameters {
 
   // TODO make HellaCacheIO diplomatic and remove this brittle collection of hacks
   //                  Core   PTW                DTIM                    coprocessors           
-  def dcacheArbPorts = 1 + usingVM.toInt + usingDataScratchpad.toInt + p(BuildRoCC).size + tileParams.core.useVector.toInt
+  def dcacheArbPorts = 1 + usingVM.toInt + usingDataScratchpad.toInt + p(BuildRoCC).size + tileParams.core.vu.nonEmpty.toInt
 
   // TODO merge with isaString in CSR.scala
   def isaDTS: String = {
@@ -78,7 +78,8 @@ trait HasNonDiplomaticTileParameters {
     val f = if (tileParams.core.fpu.nonEmpty) "f" else ""
     val d = if (tileParams.core.fpu.nonEmpty && tileParams.core.fpu.get.fLen > 32) "d" else ""
     val c = if (tileParams.core.useCompressed) "c" else ""
-    s"rv${p(XLen)}$ie$m$a$f$d$c"
+    val v = if (tileParams.core.vu.nonEmpty) "f" else ""
+    s"rv${p(XLen)}$ie$m$a$f$d$c$v"
   }
 
   def tileProperties: PropertyMap = {

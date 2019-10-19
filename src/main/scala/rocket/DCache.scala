@@ -821,7 +821,7 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
     assert(!(s1_valid_masked && s1_read && s1_write), "unsupported D$ operation")
   }
 
-  if (coreParams.useVector) {
+  if (coreParams.vu.nonEmpty) {
     edge.manager.managers.foreach { m =>
       // Statically ensure that no-allocate accesses are permitted.
       // We could consider turning some of these into dynamic PMA checks.

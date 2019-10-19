@@ -231,51 +231,6 @@ class CSRFileIO(implicit p: Parameters) extends CoreBundle
   })
 }
 
-class VConfig(implicit p: Parameters) extends CoreBundle {
-  val vl = UInt((maxVLMax.log2 + 1).W)
-  val vtype = new VType
-}
-
-object VType {
-  private def fromUInt(that: UInt, ignore_vill: Boolean)(implicit p: Parameters): VType = {
-    val res = 0.U.asTypeOf(new VType)
-    val in = that.asTypeOf(res)
-    res.vill := (in.max_vsew < in.vsew) || in.reserved =/= 0 || in.vill
-    when (!res.vill || ignore_vill) {
-      res.vsew := in.vsew(log2Ceil(1 + in.max_vsew) - 1, 0)
-      res.vlmul := in.vlmul
-    }
-    res
-  }
-
-  def fromUInt(that: UInt)(implicit p: Parameters): VType = fromUInt(that, false)
-
-  def computeVL(avl: UInt, vtype: UInt, currentVL: UInt, useCurrentVL: Bool, useZero: Bool)(implicit p: Parameters): UInt =
-    VType.fromUInt(vtype, true).vl(avl, currentVL, useCurrentVL, useZero)
-}
-
-class VType(implicit p: Parameters) extends CoreBundle {
-  val vill = Bool()
-  val reserved = UInt((xLen - 6).W)
-  val vsew = UInt(3.W)
-  val vlmul = UInt(2.W)
-
-  val max_vsew = log2Ceil(eLen/8)
-
-  def minVLMax = maxVLMax / eLen
-  def vlMax: UInt = (maxVLMax >> (this.vsew +& ~this.vlmul)).andNot(minVLMax-1)
-  def vlMaxInBytes: UInt = maxVLMax >> ~this.vlmul
-
-  def vl(avl: UInt, currentVL: UInt, useCurrentVL: Bool, useZero: Bool): UInt = {
-    val atLeastMaxVLMax = Mux(useCurrentVL, currentVL >= maxVLMax, avl >= maxVLMax)
-    val avl_lsbs = Mux(useCurrentVL, currentVL, avl)(maxVLMax.log2 - 1, 0)
-
-    val atLeastVLMax = atLeastMaxVLMax || (avl_lsbs & (-maxVLMax.S >> (this.vsew +& ~this.vlmul)).asUInt.andNot(minVLMax-1)).orR
-    val isZero = vill || useZero
-    Mux(!isZero && atLeastVLMax, vlMax, 0.U) | Mux(!isZero && !atLeastVLMax, avl_lsbs, 0.U)
-  }
-}
-
 class CSRFile(
   perfEventSets: EventSets = new EventSets(Seq()),
   customCSRs: Seq[CustomCSR] = Nil)(implicit p: Parameters)
@@ -423,7 +378,8 @@ class CSRFile(
     (if (usingAtomics) "A" else "") +
     (if (fLen >= 32) "F" else "") +
     (if (fLen >= 64) "D" else "") +
-    (if (usingCompressed) "C" else "")
+    (if (usingCompressed) "C" else "") +
+    (if (usingVector) "V" else "")
   val isaString = (if (coreParams.useRVE) "E" else "I") +
     isaMaskString +
     "X" + // Custom extensions always present (e.g. CEASE instruction)

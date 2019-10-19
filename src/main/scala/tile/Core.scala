@@ -19,7 +19,7 @@ trait CoreParams {
   val useAtomics: Boolean
   val useAtomicsOnlyForIO: Boolean
   val useCompressed: Boolean
-  val useVector: Boolean = false
+  val vu: Option[VUParams]
   val useSCIE: Boolean
   val useRVE: Boolean
   val mulDiv: Option[MulDivParams]
@@ -65,7 +65,7 @@ trait HasCoreParameters extends HasTileParameters {
   val usingAtomicsOnlyForIO = coreParams.useAtomicsOnlyForIO
   val usingAtomicsInCache = usingAtomics && !usingAtomicsOnlyForIO
   val usingCompressed = coreParams.useCompressed
-  val usingVector = coreParams.useVector
+  val usingVector = coreParams.vu.nonEmpty
   val usingSCIE = coreParams.useSCIE
 
   val retireWidth = coreParams.retireWidth
@@ -86,7 +86,9 @@ trait HasCoreParameters extends HasTileParameters {
   val mtvecInit = coreParams.mtvecInit
   val mtvecWritable = coreParams.mtvecWritable
 
-  def vLen = coreParams.vLen
+  val vLen = coreParams.vu.map(_.vLen).getOrElse(0)
+  //TODO: Remove these line or make as val
+  //def vLen = coreParams.vLen
   def eLen = coreParams.eLen(xLen, fLen)
   def vMemDataBits = if (usingVector) coreParams.vMemDataBits else 0
   def maxVLMax = vLen
